@@ -117,6 +117,17 @@ class AntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         obs = np.concatenate([obs, comvel])
     return obs
 
+  def _flip_back(self):
+    state = self.state_vector()
+    flipped = state[2] <= 0.3
+    if flipped:
+      self.sim.reset()
+      qpos = self.init_qpos.copy()
+      qpos[:2] = state[:2]
+      qpos += self.np_random.uniform(size=self.model.nq, low=-.1, high=.1)
+      qvel = self.init_qvel + self.np_random.randn(self.model.nv) * .1
+      self.set_state(qpos, qvel)
+  
   def reset_model(self):
     qpos = self.init_qpos + self.np_random.uniform(
         size=self.model.nq, low=-.1, high=.1)

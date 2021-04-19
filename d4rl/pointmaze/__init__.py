@@ -1,4 +1,4 @@
-from .maze_model import MazeEnv, OPEN, U_MAZE, MEDIUM_MAZE, LARGE_MAZE, U_MAZE_EVAL, MEDIUM_MAZE_EVAL, LARGE_MAZE_EVAL
+from .maze_model import MazeEnv, CORRIDOR_MAZE, OPEN, U_MAZE, MEDIUM_MAZE, LARGE_MAZE, U_MAZE_EVAL, MEDIUM_MAZE_EVAL, LARGE_MAZE_EVAL
 from gym.envs.registration import register
 
 register(
@@ -14,6 +14,63 @@ register(
         'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-open-sparse.hdf5'
     }
 )
+
+register(
+    id='maze2d-testmaze-dense-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=150,
+    kwargs={
+        'maze_spec':CORRIDOR_MAZE,
+        'reward_type':'sparse',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-testmaze-dense-v1',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=150,
+    kwargs={
+        'maze_spec':CORRIDOR_MAZE,
+        'reward_type':'sparse',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-mediummaze-dense-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=150,
+    kwargs={
+        'maze_spec':MEDIUM_MAZE,
+        'reward_type':'dense',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-mediummaze-dense-v1',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=150,
+    kwargs={
+        'maze_spec':MEDIUM_MAZE,
+        'reward_type':'dense',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
 
 register(
     id='maze2d-umaze-v0',

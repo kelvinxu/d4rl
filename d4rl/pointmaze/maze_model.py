@@ -10,6 +10,7 @@ import random
 WALL = 10
 EMPTY = 11
 GOAL = 12
+START = 13
 
 
 def parse_maze(maze_str):
@@ -25,6 +26,8 @@ def parse_maze(maze_str):
                 maze_arr[w][h] = GOAL
             elif tile == ' ' or tile == 'O' or tile == '0':
                 maze_arr[w][h] = EMPTY
+            elif tile == 'S':
+                maze_arr[w][h] = START
             else:
                 raise ValueError('Unknown tile type: %s' % tile)
     return maze_arr
@@ -81,6 +84,34 @@ def point_maze(maze_str):
 
     return mjcmodel
 
+
+CORRIDOR_MAZE = \
+        "################\\"+\
+        "#OO#OO#####OOOO#\\"+\
+        "#OOOOOOOOOOOOOO#\\"+\
+        "#OO#########OOO#\\"+\
+        "#SOOOOOOOOOOOOG#\\"+\
+        "#O##########OOO#\\"+\
+        "#OOO#OOOOOOOOOO#\\"+\
+        "#OO#OO#####OOOO#\\"+\
+        "################"
+
+"""
+CORRIDOR_MAZE = \
+        "######################\\"+\
+        "#OO#OOOOO#####OOOOOOO#\\"+\
+        "#OOOOOOOO#######OOOOO#\\"+\
+        "#OOO##########OOOOO###\\"+\
+        "#OOOOOOOO#####OOOOOOO#\\"+\
+        "#OO###############OOO#\\"+\
+        "#SOOOOOOOOOOOOOOOOOOG#\\"+\
+        "#O################OOO#\\"+\
+        "#OOOOOOOO#####OOO#OOO#\\"+\
+        "#OOO###OO#####OOOOOOO#\\"+\
+        "#OOOOOOOOOOOOOOOOOOOO#\\"+\
+        "#OO#OOOOO#####OOO#OOO#\\"+\
+        "######################"
+"""
 
 LARGE_MAZE = \
         "############\\"+\
@@ -158,6 +189,7 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
                  maze_spec=U_MAZE,
                  reward_type='dense',
                  reset_target=False,
+                 reset_to_random_and_goal=False,
                  **kwargs):
         offline_env.OfflineEnv.__init__(self, **kwargs)
 
@@ -165,8 +197,11 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
         self.str_maze_spec = maze_spec
         self.maze_arr = parse_maze(maze_spec)
         self.reward_type = reward_type
-        self.reset_locations = list(zip(*np.where(self.maze_arr == EMPTY)))
+        self.reset_locations = list(zip(*np.where(self.maze_arr == START)))
+        if len(self.reset_locations) == 0:
+            self.reset_locations = list(zip(*np.where(self.maze_arr == EMPTY)))
         self.reset_locations.sort()
+        self._reset_to_random_and_goal = reset_to_random_and_goal
 
         self._target = np.array([0.0,0.0])
 
@@ -187,18 +222,23 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
             self.set_target(np.array(self.reset_locations[0]).astype(self.observation_space.dtype))
         self.empty_and_goal_locations = self.reset_locations + self.goal_locations
 
+    def compute_reward(self, ob, target, axis=None):
+        if self.reward_type == 'sparse':
+            reward = (np.linalg.norm(ob[0:2] - target, axis=axis) <= 0.5).astype(np.float32)
+        elif self.reward_type == 'dense':
+            reward = np.exp(-np.linalg.norm(ob[0:2] - target, axis=axis))
+        else:
+            raise ValueError('Unknown reward type %s' % self.reward_type)
+        return reward
+
     def step(self, action):
         action = np.clip(action, -1.0, 1.0)
         self.clip_velocity()
         self.do_simulation(action, self.frame_skip)
         self.set_marker()
         ob = self._get_obs()
-        if self.reward_type == 'sparse':
-            reward = 1.0 if np.linalg.norm(ob[0:2] - self._target) <= 0.5 else 0.0
-        elif self.reward_type == 'dense':
-            reward = np.exp(-np.linalg.norm(ob[0:2] - self._target))
-        else:
-            raise ValueError('Unknown reward type %s' % self.reward_type)
+        reward = self.compute_reward(ob, self._target)
+
         done = False
         return ob, reward, done, {}
 
@@ -223,10 +263,14 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
         self.set_state(self.sim.data.qpos, qvel)
 
     def reset_model(self):
-        idx = self.np_random.choice(len(self.empty_and_goal_locations))
-        reset_location = np.array(self.empty_and_goal_locations[idx]).astype(self.observation_space.dtype)
-        qpos = reset_location + self.np_random.uniform(low=-.1, high=.1, size=self.model.nq)
-        qvel = self.init_qvel + self.np_random.randn(self.model.nv) * .1
+        if self._reset_to_random_and_goal:
+            idx = self.np_random.choice(len(self.empty_and_goal_locations))
+            reset_location = np.array(self.empty_and_goal_locations[idx]).astype(self.observation_space.dtype)
+        else:
+            idx = self.np_random.choice(len(self.reset_locations))
+            reset_location = np.array(self.reset_locations[idx]).astype(self.observation_space.dtype)
+        qpos = reset_location #+ self.np_random.uniform(low=-.1, high=.1, size=self.model.nq)
+        qvel = self.init_qvel #+ self.np_random.randn(self.model.nv) * .1
         self.set_state(qpos, qvel)
         if self.reset_target:
             self.set_target()
@@ -234,7 +278,7 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
 
     def reset_to_location(self, location):
         self.sim.reset()
-        reset_location = np.array(location).astype(self.observation_space.dtype)
+        reset_location = np.array(location).astype(self.observation_space.dtype)[0:2]
         qpos = reset_location + self.np_random.uniform(low=-.1, high=.1, size=self.model.nq)
         qvel = self.init_qvel + self.np_random.randn(self.model.nv) * .1
         self.set_state(qpos, qvel)

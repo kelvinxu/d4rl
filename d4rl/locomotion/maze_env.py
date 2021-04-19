@@ -42,6 +42,15 @@ BIG_MAZE = [[1, 1, 1, 1, 1, 1, 1, 1],
             [1, 0, 0, 0, 1, G, 0, 1],
             [1, 1, 1, 1, 1, 1, 1, 1]]
 
+MED_MAZE = [[1, 1, 1, 1, 1, 1, 1, 1],
+            [1, R, 0, 1, 1, 0, 0, 1],
+            [1, 0, 0, 1, 0, 0, 0, 1],
+            [1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 0, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1, G, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1]]
+
 HARDEST_MAZE = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, R, 0, 0, 0, 1, G, 0, 0, 0, 0, 1],
                 [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
@@ -58,6 +67,15 @@ U_MAZE_TEST = [[1, 1, 1, 1, 1],
               [1, 1, 1, 0, 1],
               [1, G, 0, 0, 1],
               [1, 1, 1, 1, 1]]
+
+MED_MAZE_TEST = [[1, 1, 1, 1, 1, 1, 1, 1],
+                [1, R, 0, 1, 1, 0, 0, 1],
+                [1, 0, 0, 1, 0, 0, 0, 1],
+                [1, 1, 0, 0, 0, 1, 1, 1],
+                [1, 0, 0, 1, 0, 0, 0, 1],
+                [1, 0, 1, 0, 0, 1, 0, 1],
+                [1, 0, 0, 0, 1, 0, G, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1]]
 
 BIG_MAZE_TEST = [[1, 1, 1, 1, 1, 1, 1, 1],
                 [1, R, 0, 1, 1, 0, 0, 1],
@@ -141,12 +159,14 @@ class MazeEnv(gym.Env):
       manual_collision=False,
       non_zero_reset=False,
       reward_type='dense',
+      xml_path=None,
       *args,
       **kwargs):
     if self.LOCOMOTION_ENV is None:
       raise ValueError('LOCOMOTION_ENV is unspecified.')
 
-    xml_path = self.LOCOMOTION_ENV.FILE
+    if xml_path is None:
+        xml_path = self.LOCOMOTION_ENV.FILE
     tree = ET.parse(xml_path)
     worldbody = tree.find(".//worldbody")
 
