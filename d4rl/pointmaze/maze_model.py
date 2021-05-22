@@ -85,16 +85,57 @@ def point_maze(maze_str):
     return mjcmodel
 
 
+
+#CORRIDOR_CORNER_MAZE = \
+#        "#######\\"+\
+#        "#SO#OO#\\"+\
+#        "#O##OO#\\"+\
+#        "#OOOOO#\\"+\
+#        "#O##OO#\\"+\
+#        "##OOOO#\\"+\
+#        "#OO#OG#\\"+\
+#        "#######"
+CORNER_MAZE = \
+        "#######\\"+\
+        "#SOOOO#\\"+\
+        "#OOOOO#\\"+\
+        "#OOOOO#\\"+\
+        "#OOOOO#\\"+\
+        "#OOOOO#\\"+\
+        "#OOOOG#\\"+\
+        "#######"
+
+
+CORRIDOR_CORNER_MAZE_DENSE_SPARSE_MULTI = \
+        "########\\"+\
+        "#S#OOOS#\\"+\
+        "#OO###O#\\"+\
+        "##OOGOO#\\"+\
+        "#OO###O#\\"+\
+        "#S#OOOS#\\"+\
+        "########"
+
+
+CORRIDOR_CORNER_MAZE_DENSE_SPARSE = \
+        "######\\"+\
+        "#SOOO#\\"+\
+        "#O##O#\\"+\
+        "#OOOO#\\"+\
+        "####O#\\"+\
+        "#OOOO#\\"+\
+        "#O##O#\\"+\
+        "#G#OO#\\"+\
+        "######"
+
+
 CORRIDOR_MAZE = \
-        "################\\"+\
-        "#OO#OO#####OOOO#\\"+\
-        "#OOOOOOOOOOOOOO#\\"+\
-        "#OO#########OOO#\\"+\
-        "#SOOOOOOOOOOOOG#\\"+\
-        "#O##########OOO#\\"+\
-        "#OOO#OOOOOOOOOO#\\"+\
-        "#OO#OO#####OOOO#\\"+\
-        "################"
+        "#####\\"+\
+        "#O#S#\\"+\
+        "#OOO#\\"+\
+        "###O#\\"+\
+        "#OOO#\\"+\
+        "#G#O#\\"+\
+        "#####"
 
 """
 CORRIDOR_MAZE = \
@@ -196,14 +237,16 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
         self.reset_target = reset_target
         self.str_maze_spec = maze_spec
         self.maze_arr = parse_maze(maze_spec)
-        self.reward_type = reward_type
         self.reset_locations = list(zip(*np.where(self.maze_arr == START)))
         if len(self.reset_locations) == 0:
             self.reset_locations = list(zip(*np.where(self.maze_arr == EMPTY)))
         self.reset_locations.sort()
         self._reset_to_random_and_goal = reset_to_random_and_goal
 
+        self._reward_type = reward_type
+
         self._target = np.array([0.0,0.0])
+        self._current_goal = 0
 
         model = point_maze(maze_spec)
         with model.asfile() as f:
@@ -221,6 +264,14 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
             # If no goal, use the first empty tile
             self.set_target(np.array(self.reset_locations[0]).astype(self.observation_space.dtype))
         self.empty_and_goal_locations = self.reset_locations + self.goal_locations
+
+    @property
+    def reward_type(self):
+        if isinstance(self._reward_type, str):
+            return self._reward_type
+        elif isinstance(self._reward_type, list):
+            assert len(self._reward_type) == 2, "only two goals are supported"
+            return self._reward_type[self._current_goal]
 
     def compute_reward(self, ob, target, axis=None):
         if self.reward_type == 'sparse':
@@ -247,6 +298,16 @@ class MazeEnv(mujoco_env.MujocoEnv, utils.EzPickle, offline_env.OfflineEnv):
 
     def get_target(self):
         return self._target
+
+    def set_goal(self, goal_idx):
+        #assert len(self.reset_locations) == 1, "forward backward algo"
+        #assert len(self.goal_locations) == 1, "forward backward algo"
+        assert goal_idx <= 1, "only two goals supported" 
+        if goal_idx != self._current_goal:
+            self._current_goal = goal_idx
+            self.reset_locations, self.goal_locations = self.goal_locations, self.reset_locations
+            idx = self.np_random.choice(len(self.goal_locations))
+            self.set_target(self.goal_locations[idx])
 
     def set_target(self, target_location=None):
         if target_location is None:

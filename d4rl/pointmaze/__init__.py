@@ -1,4 +1,4 @@
-from .maze_model import MazeEnv, CORRIDOR_MAZE, OPEN, U_MAZE, MEDIUM_MAZE, LARGE_MAZE, U_MAZE_EVAL, MEDIUM_MAZE_EVAL, LARGE_MAZE_EVAL
+from .maze_model import MazeEnv, CORRIDOR_MAZE, CORNER_MAZE, CORRIDOR_CORNER_MAZE_DENSE_SPARSE, CORRIDOR_CORNER_MAZE_DENSE_SPARSE_MULTI, OPEN, U_MAZE, MEDIUM_MAZE, LARGE_MAZE, U_MAZE_EVAL, MEDIUM_MAZE_EVAL, LARGE_MAZE_EVAL
 from gym.envs.registration import register
 
 register(
@@ -15,13 +15,121 @@ register(
     }
 )
 
+#if False:
+#    maze = CORRIDOR_MAZE
+#else:
+#    maze = CORNER_MAZE
+#maze = CORRIDOR_CORNER_MAZE_DENSE_SPARSE
+
+maze = CORNER_MAZE
+#maze = CORRIDOR_MAZE
+
+register(
+    id='maze2d-testmaze-dense-sparse-multi-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=100,
+    kwargs={
+        'maze_spec':CORRIDOR_CORNER_MAZE_DENSE_SPARSE_MULTI,
+        'reward_type': ['dense', 'dense'],
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+
+register(
+    id='maze2d-testmaze-dense-sparse-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=100,
+    kwargs={
+        'maze_spec':maze,
+        'reward_type': ['dense', 'sparse'],
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+register(
+    id='maze2d-testmaze-dense-sparse-v1',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=100,
+    kwargs={
+        'maze_spec':maze,
+        'reward_type': ['dense', 'sparse'],
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-testmaze-sparse-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=100,
+    kwargs={
+        'maze_spec':maze,
+        'reward_type':'sparse',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-testmaze-sparse-v1',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=100,
+    kwargs={
+        'maze_spec':maze,
+        'reward_type':'sparse',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-hmaze-dense-v0',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=115,
+    kwargs={
+        'maze_spec':CORRIDOR_MAZE,
+        'reward_type':'dense',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+register(
+    id='maze2d-hmaze-dense-v1',
+    entry_point='d4rl.pointmaze:MazeEnv',
+    max_episode_steps=115,
+    kwargs={
+        'maze_spec':CORRIDOR_MAZE,
+        'reward_type':'dense',
+        'reset_target': False,
+        'ref_min_score': 0.94,
+        'ref_max_score': 62.6,
+        'dataset_url':'http://rail.eecs.berkeley.edu/datasets/offline_rl/maze2d/maze2d-umaze-sparse.hdf5'
+    }
+)
+
+
 register(
     id='maze2d-testmaze-dense-v0',
     entry_point='d4rl.pointmaze:MazeEnv',
-    max_episode_steps=150,
+    max_episode_steps=100,
     kwargs={
-        'maze_spec':CORRIDOR_MAZE,
-        'reward_type':'sparse',
+        'maze_spec':maze,
+        'reward_type':'dense',
         'reset_target': False,
         'ref_min_score': 0.94,
         'ref_max_score': 62.6,
@@ -32,10 +140,10 @@ register(
 register(
     id='maze2d-testmaze-dense-v1',
     entry_point='d4rl.pointmaze:MazeEnv',
-    max_episode_steps=150,
+    max_episode_steps=100,
     kwargs={
-        'maze_spec':CORRIDOR_MAZE,
-        'reward_type':'sparse',
+        'maze_spec':maze,
+        'reward_type':'dense',
         'reset_target': False,
         'ref_min_score': 0.94,
         'ref_max_score': 62.6,
@@ -46,7 +154,7 @@ register(
 register(
     id='maze2d-mediummaze-dense-v0',
     entry_point='d4rl.pointmaze:MazeEnv',
-    max_episode_steps=150,
+    max_episode_steps=200,
     kwargs={
         'maze_spec':MEDIUM_MAZE,
         'reward_type':'dense',
